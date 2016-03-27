@@ -11,6 +11,8 @@ hi ExtfIncSearch cterm=underline
 
 if !hasmapto('<Plug>Extf')
   nmap <unique> f <Plug>Extf
+endif
+if !hasmapto('<Plug>ExtF')
   nmap <unique> F <Plug>ExtF
 endif
 
