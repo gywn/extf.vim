@@ -8,6 +8,9 @@
 
 ## Installation
 
-   Plugin 'hijack111/vim-extf'
+### Vundle
 
-## Showcase
+    Plugin 'hijack111/extf.vim'
+
+## Screenshot
+![Screenshot](../images/showcase_1.gif)
