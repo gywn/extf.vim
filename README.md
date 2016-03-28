@@ -22,6 +22,7 @@ __N__: Number of character that can be inputed to filter the line.
     cp extf.vim/plugin/extf.vim ~/.vim/plugin
 
 ## Screenshot
+
 <div align="center">
-![Screenshot](../images/showcase_1.gif)
+<img src=/hijack111/extf.vim/blob/images/showcase_1.gif?raw=true/>
 </div>
