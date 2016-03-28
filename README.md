@@ -24,5 +24,5 @@ __N__: Number of character that can be inputed to filter the line.
 ## Screenshot
 
 <div align="center">
-<img src=/hijack111/extf.vim/blob/images/showcase_1.gif?raw=true/>
+<img src="/hijack111/extf.vim/raw/images/showcase_1.gif"/>
 </div>
