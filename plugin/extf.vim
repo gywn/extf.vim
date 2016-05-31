@@ -7,15 +7,7 @@ let g:loaded_extf = 100  " version number
 let s:save_cpo = &cpo
 set cpo&vim
 
-" hi ExtfIncSearch cterm=underline
-hi link ExtfIncSearch IncSearch 
-
-if !hasmapto('<Plug>Extf')
-  nmap <unique> f <Plug>Extf
-endif
-if !hasmapto('<Plug>ExtF')
-  nmap <unique> F <Plug>ExtF
-endif
+hi link ExtfIncSearch IncSearch
 
 function! s:plist(str, pat) abort
   let l:plist = []
@@ -39,35 +31,56 @@ function! s:clear_highlight() abort
   endif
 endfunction
 
-function! s:add_highlight(col) abort
+function! s:update_hl_sel(col) abort
+  if a:col > 0 | let b:extf.c = a:col | endif
+
   call s:clear_highlight()
-  let b:extf.hl_id = matchadd('ExtfIncSearch',
+  let b:extf.hl_id = matchadd(b:extf.vis ? 'Visual' : 'ExtfIncSearch',
         \ '\%'.b:extf.origl.'l'.
-        \ '\%'.a:col.'c'.
+        \ '\%'.b:extf.c.'c'.
         \ '.\{'.len(b:extf.pat).'}')
-  call cursor(b:extf.origl, a:col)
+
+  if b:extf.vis
+    call setpos("'>", [0, b:extf.origl, b:extf.c + max([0, len(b:extf.pat) - 1]), 0])
+    normal gv
+  else
+    call cursor(b:extf.origl, b:extf.c)
+  endif
 endfunction
 
-function! s:initiate(direction) abort
+function! s:initiate(direction, mode) abort range
+  if a:mode == 'v' && visualmode() != 'v'
+    normal gv
+    return
+  endif
+
+  let l:v = a:mode == 'v' && visualmode() == 'v'
   let b:extf = {
+    \ 'vis'   : l:v,
     \ 'drt'   : a:direction,
-    \ 'origl' : line('.'),
-    \ 'origc' : col('.'),
+    \ 'origl' : l:v ? getpos("'>")[1] : line('.'),
+    \ 'origc' : l:v ? getpos("'>")[2] : col('.'),
+    \ 'c'     : 0,
     \ 'pat'   : '',
     \ 'plist' : [],
     \ 'hl_id' : -1
     \ }
+  call s:update_hl_sel(b:extf.origc)
 
   call feedkeys("\<Plug>_ExtfLoop")
 endfunction
 
 function! s:reset(successful) abort
   call s:clear_highlight()
-  if ! a:successful
-    call cursor(b:extf.origl, b:extf.origc)
-  endif
 
-  unlet b:extf
+  if b:extf.vis
+    call setpos("'>", [0, b:extf.origl, a:successful
+      \ ? b:extf.c < b:extf.origc ? b:extf.c : b:extf.c + len(b:extf.pat) - 2
+      \ : b:extf.origc, 0])
+    normal gv
+  else
+    call cursor(b:extf.origl, a:successful ? b:extf.c : b:extf.origc)
+  endif
 endfunction
 
 function s:cycle_cursor(incr) abort
@@ -75,18 +88,19 @@ function s:cycle_cursor(incr) abort
     call s:reset(0) | return
   endif
 
-  let l:idx = index(b:extf.plist, col('.') - 1)
+  let l:idx = index(b:extf.plist, b:extf.c - 1)
   let l:new_idx = (l:idx + a:incr * b:extf.drt) % len(b:extf.plist)
   if l:new_idx == l:idx
     call s:reset(1) | return
   endif
-  call s:add_highlight(get(b:extf.plist, l:new_idx) + 1)
+  call s:update_hl_sel(get(b:extf.plist, l:new_idx) + 1)
 
   call feedkeys("\<Plug>_ExtfLoop")
 endfunction
 
 function! s:normal_key() abort
   if ! getchar(1)
+    call s:update_hl_sel(0)
     call feedkeys("\<Plug>_ExtfLoop") | return
   endif
 
@@ -102,8 +116,9 @@ function! s:normal_key() abort
 
   let b:extf.plist = s:plist(getline(b:extf.origl), b:extf.pat)
   if empty(b:extf.plist)
-    "only c d f g h i j k l m p v F P \" % : @ are permitted to be re-emitted
-    if index([99, 100, 102, 103, 104, 105, 106, 107, 108, 109,
+    call s:reset(1)
+    "only c d y f g h i j k l m p v F P \" % : @ are permitted to be re-emitted
+    if index([99, 100, 121, 102, 103, 104, 105, 106, 107, 108, 109,
           \ 112, 118, 70, 80, 34, 37, 58, 64], l:char) > -1
       call feedkeys(nr2char(l:char))
     elseif l:char == 97  " a: insert after last char
@@ -111,11 +126,9 @@ function! s:normal_key() abort
     else
       exec "normal \<Esc>"
     endif
-
-    call s:reset(1)
     return
   endif
-  call s:add_highlight(get(b:extf.plist, 0) + 1)
+  call s:update_hl_sel(get(b:extf.plist, 0) + 1)
 
   call feedkeys("\<Plug>_ExtfLoop")
 endfunction
@@ -126,8 +139,10 @@ map <silent> <unique> <script> <Plug>_ExtfLoop<CR>    :call <SID>reset(1)<CR>
 map <silent> <unique> <script> <Plug>_ExtfLoop<TAB>   :call <SID>cycle_cursor(1)<CR>
 map <silent> <unique> <script> <Plug>_ExtfLoop<S-TAB> :call <SID>cycle_cursor(-1)<CR>
 map <silent> <unique> <script> <Plug>_ExtfLoop        :call <SID>normal_key()<CR>
-map <silent> <unique> <script> <Plug>Extf             :call <SID>initiate(1)<CR>
-map <silent> <unique> <script> <Plug>ExtF             :call <SID>initiate(-1)<CR>
+nmap <silent> <unique> <script> f            :call <SID>initiate(1, 'n')<CR>
+nmap <silent> <unique> <script> F            :call <SID>initiate(-1, 'n')<CR>
+vmap <silent> <unique> <script> f            :call <SID>initiate(1, 'v')<CR>
+vmap <silent> <unique> <script> F            :call <SID>initiate(-1, 'v')<CR>
 
 let &cpo = s:save_cpo
 unlet s:save_cpo
