@@ -14,15 +14,15 @@ __N__: Number of character that can be inputed to filter the line.
 
 ### Vundle
 
-    Plugin 'hijack111/extf.vim'
+    Plugin 'gywn/extf.vim'
 
 ### Command Line
 
-    git clone https://github.com/hijack111/extf.vim.git
+    git clone https://github.com/gywn/extf.vim.git
     cp extf.vim/plugin/extf.vim ~/.vim/plugin
 
 ## Screenshot
 
 <div align="center">
-<img src="https://raw.githubusercontent.com/hijack111/extf.vim/images/showcase_1.gif"/>
+<img src="https://raw.githubusercontent.com/gywn/extf.vim/images/showcase_1.gif"/>
 </div>
